@@ -26,7 +26,7 @@
 #ifndef NETTLE_SHA1_H_INCLUDED
 #define NETTLE_SHA1_H_INCLUDED
 
-#include "../chdr/coretypes.h"
+#include "coretypes.h"
 
 
 

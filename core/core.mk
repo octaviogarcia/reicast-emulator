@@ -8,7 +8,7 @@ RZDCY_SRC_DIR ?= $(call my-dir)
 
 RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
- hw/extdev/ hw/arm/ hw/naomi/ imgread/ linux/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
+ hw/extdev/ hw/arm/ hw/naomi/ imgread/ linux/ ./ deps/coreio/ deps/zlib/ deps/crypto/ \
  deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ 
 
 
@@ -70,7 +70,64 @@ endif
 RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.c))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
-	
+
+# add libchdr
+
+# crypto
+RZDCY_FILES += \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/crypto/md5.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/crypto/sha1.c
+
+# flac
+RZDCY_FILES += \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/bitmath.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/bitreader.c	 \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/cpu.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/crc.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/fixed.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/fixed_intrin_sse2.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/fixed_intrin_ssse3.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/float.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/format.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/lpc.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/lpc_intrin_avx2.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/lpc_intrin_sse2.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/lpc_intrin_sse41.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/lpc_intrin_sse.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/md5.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/memory.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/metadata_iterators.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/metadata_object.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/stream_decoder.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/window.c
+
+# lzma
+RZDCY_FILES += \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/Alloc.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/Bra86.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/Bra.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/BraIA64.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/CpuArch.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/Delta.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/LzFind.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/Lzma86Dec.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/Lzma86Enc.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/LzmaDec.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/LzmaEnc.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/LzmaLib.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/Sort.c 
+
+# libchdr
+RZDCY_FILES += \
+	$(RZDCY_SRC_DIR)/deps/libchdr/src/bitstream.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/src/cdrom.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/src/chd.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/src/flac.c \
+	$(RZDCY_SRC_DIR)/deps/libchdr/src/huffman.c
+
+
+$(info Files: $(RZDCY_FILES))
+
 ifdef FOR_PANDORA
 RZDCY_CFLAGS	:= \
 	$(CFLAGS) -c -O3 -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps \
@@ -98,6 +155,8 @@ RZDCY_CFLAGS	:= \
 		endif
 	endif
 endif
+
+RZDCY_CFLAGS += -Ideps/libchdr/flac-1.3.2/src/libFLAC/include -Ideps/libchdr/eps/crypto -DHAVE_SYS_PARAM_H -DFLAC__NO_DLL -D_7ZIP_ST
 
 ifdef NO_REC
   RZDCY_CFLAGS += -DTARGET_NO_REC

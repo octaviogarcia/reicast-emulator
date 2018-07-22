@@ -241,6 +241,15 @@ CXXFLAGS += -fno-rtti -fpermissive -fno-operator-names
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
+# todo:
+INCS += -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/include
+INCS += -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/flac-1.3.2/src/libFLAC/include
+INCS += -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/crypto
+INCS += -I$(RZDCY_SRC_DIR)/deps/libchdr/src
+INCS += -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-16.04/C/
+INCS += -DHAVE_SYS_PARAM_H -DFLAC__NO_DLL -D_7ZIP_ST -DPACKAGE_VERSION=\"reicast-embed\"
+INCS += -DHAVE_LROUND -DHAVE_STDINT_H -DFLAC__HAS_OGG=0
+
 LIBS += -lm -lrt -ldl
 LIBS  += -lpthread
 

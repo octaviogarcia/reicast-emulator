@@ -1,6 +1,6 @@
 #include "common.h"
 
-#include "deps/chdr/chd.h"
+#include "deps/libchdr/src/chd.h"
 
 struct CHDDisc : Disc
 {
