@@ -1,4 +1,5 @@
 LOCAL_PATH := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
 FOR_LINUX :=1
 #NO_REC := 1
 #NO_REND := 1
@@ -7,6 +8,7 @@ USE_OSS := 1
 #USE_PULSEAUDIO := 1
 #USE_LIBAO := 1
 USE_EVDEV := 1
+USE_SDL_INPUT := 1
 
 CXX=${CC_PREFIX}g++
 CC=${CC_PREFIX}gcc
@@ -171,7 +173,8 @@ else ifneq (,$(findstring beagle,$(platform)))
 else ifneq (,$(findstring pandora,$(platform)))
     FOR_PANDORA := 1
     USE_X11 := 1
-    USE_SDL := 1
+    USE_SDL_INPUT := 1
+    USE_SDL_GUI := 1
     PGO_USE := 1
     USE_GLES := 1
     MFLAGS +== -marm -march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -funroll-loops -fpermissive
@@ -228,10 +231,24 @@ else ifneq (,$(findstring vero4k,$(platform)))
     INCS += -I/opt/vero3/include/
     LIBS += -L/opt/vero3/lib/ -lEGL -lGLESv2
     USE_GLES := 1
-    USE_SDL := 1
+    USE_SDL_INPUT := 1
+    USE_SDL_GUI := 1
 
 else
     $(error Unknown platform)
+endif
+
+# X11 and SDL GUI don't work simultaneously
+ifdef USE_SDL_GUI
+undefine USE_X11
+endif
+
+ifdef USE_SDL_INPUT
+    USE_SDL := 1
+else ifdef USE_SDL_GUI
+    USE_SDL := 1
+else
+    unset USE_SDL
 endif
 
 RZDCY_SRC_DIR = $(LOCAL_PATH)/../../core
@@ -261,8 +278,16 @@ ifndef NOT_ARM
 endif
 
 ifdef USE_SDL
-    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
+    CXXFLAGS += `sdl2-config --cflags`
     LIBS += `sdl2-config --libs`
+endif
+
+ifdef USE_SDL_INPUT
+    CXXFLAGS += -D USE_SDL_INPUT
+endif
+
+ifdef USE_SDL_GUI
+    CXXFLAGS += -D USE_SDL_GUI
 endif
 
 ifdef PGO_MAKE

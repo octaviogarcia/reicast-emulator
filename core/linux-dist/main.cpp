@@ -27,7 +27,7 @@
 	#include "linux-dist/x11.h"
 #endif
 
-#if defined(USE_SDL)
+#if defined(USE_SDL_GUI) || defined(USE_SDL_INPUT)
 	#include "sdl/sdl.h"
 #endif
 
@@ -222,7 +222,7 @@ void os_SetupInput()
 		input_x11_init();
 	#endif
 
-	#if defined(USE_SDL)
+	#if defined(USE_SDL_INPUT)
 		input_sdl_init();
 	#endif
 }
@@ -241,7 +241,7 @@ void UpdateInputState(u32 port)
 		input_evdev_handle(&evdev_controllers[port], port);
 	#endif
 
-	#if defined(USE_SDL)
+	#if defined(USE_SDL_INPUT)
 		input_sdl_handle(port);
 	#endif
 }
@@ -281,7 +281,7 @@ void os_SetWindowText(const char * text)
 	#if defined(SUPPORT_X11)
 		x11_window_set_text(text);
 	#endif
-	#if defined(USE_SDL)
+	#if defined(USE_SDL_GUI)
 		sdl_window_set_text(text);
 	#endif
 }
@@ -294,7 +294,7 @@ void os_CreateWindow()
 	#if defined(SUPPORT_X11)
 		x11_window_create();
 	#endif
-	#if defined(USE_SDL)
+	#if defined(USE_SDL_GUI)
 		sdl_window_create();
 	#endif
 }
@@ -502,7 +502,7 @@ int main(int argc, wchar* argv[])
 	printf("Config dir is: %s\n", get_writable_config_path("/").c_str());
 	printf("Data dir is:   %s\n", get_writable_data_path("/").c_str());
 
-	#if defined(USE_SDL)
+	#if defined(USE_SDL_GUI)
 		if (SDL_Init(0) != 0)
 		{
 			die("SDL: Initialization failed!");

@@ -1,4 +1,4 @@
-#if defined(USE_SDL)
+#if defined(USE_SDL_GUI) || defined(USE_SDL_INPUT)
 #include "types.h"
 #include "cfg/cfg.h"
 #include "linux-dist/main.h"
@@ -68,9 +68,9 @@ void input_sdl_init()
 	{
 		JoySDL = SDL_JoystickOpen(0);
 	}
-	
-	printf("Joystick opened\n");  
-	
+
+	printf("Joystick opened\n");
+
 	if(JoySDL)
 	{
 		int AxisCount,ButtonCount;
@@ -114,7 +114,7 @@ void input_sdl_init()
 			JSensitivity[128+i] = j;
 		}
 	#endif
-	
+
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 }
 
@@ -163,7 +163,7 @@ void input_sdl_handle(u32 port)
 							snprintf(OSD_Info, 128, "Right Nub mode: %s\n", num_mode[mouse_use]);
 							OSD_Delay=300;
 						}
-						break;  
+						break;
 					case SDLK_s:
 						if (value)
 						{
@@ -179,7 +179,7 @@ void input_sdl_handle(u32 port)
 							snprintf(OSD_Info, 128, "FrameSkipping %s\n", (FrameSkipping) ? "On" : "Off");
 							OSD_Delay = 300;
 						}
-						break;  
+						break;
 					case SDLK_c:
 						if (value)
 						{
@@ -196,9 +196,9 @@ void input_sdl_handle(u32 port)
 				{
 					u32 mt = sdl_map_btn[k] >> 16;
 					u32 mo = sdl_map_btn[k] & 0xFFFF;
-					
+
 					// printf("BUTTON %d,%d\n",JE.number,JE.value);
-					
+
 					if (mt == 0)
 					{
 						// printf("Mapped to %d\n",mo);
@@ -219,7 +219,7 @@ void input_sdl_handle(u32 port)
 							rt[port] = value ? 255 : 0;
 						}
 					}
-					
+
 				}
 				break;
 			case SDL_JOYAXISMOTION:
@@ -228,13 +228,13 @@ void input_sdl_handle(u32 port)
 				{
 					u32 mt = sdl_map_axis[k] >> 16;
 					u32 mo = sdl_map_axis[k] & 0xFFFF;
-					
+
 					//printf("AXIS %d,%d\n",JE.number,JE.value);
 					s8 v=(s8)(value/256); //-127 ... + 127 range
 					#ifdef TARGET_PANDORA
 						v = JSensitivity[128+v];
 					#endif
-					
+
 					if (mt == 0)
 					{
 						kcode[port] |= mo;
@@ -247,15 +247,15 @@ void input_sdl_handle(u32 port)
 						{
 							kcode[port] &= ~(mo*2);
 						}
-						
+
 						// printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
 					}
 					else if (mt == 1)
 					{
 						if (v >= 0) v++;  //up to 255
-						
+
 						//   printf("AXIS %d,%d Mapped to %d %d %d\n",JE.number,JE.value,mo,v,v+127);
-						
+
 						if (mo == 0)
 						{
 							lt[port] = v + 127;
@@ -282,7 +282,7 @@ void input_sdl_handle(u32 port)
 			case SDL_MOUSEMOTION:
 					xx = event.motion.xrel;
 					yy = event.motion.yrel;
-					
+
 					// some caping and dead zone...
 					if (abs(xx) < 4)
 					{
@@ -292,10 +292,10 @@ void input_sdl_handle(u32 port)
 					{
 						yy = 0;
 					}
-					
+
 					xx = xx * 255 / 20;
 					yy = yy * 255 / 20;
-					
+
 					if (xx > 255)
 					{
 						xx = 255;
@@ -304,7 +304,7 @@ void input_sdl_handle(u32 port)
 					{
 						xx = -255;
 					}
-					
+
 					if (yy > 255)
 					{
 						yy = 255;
@@ -313,7 +313,7 @@ void input_sdl_handle(u32 port)
 					{
 						yy = -255;
 					}
-					
+
 					//if (abs(xx)>0 || abs(yy)>0) printf("mouse %i, %i\n", xx, yy);
 					switch (mouse_use)
 					{
@@ -361,7 +361,7 @@ void input_sdl_handle(u32 port)
 				break;
 		}
 	}
-			
+
 	if (keys[0]) { kcode[port] &= ~DC_BTN_C; }
 	if (keys[6]) { kcode[port] &= ~DC_BTN_A; }
 	if (keys[7]) { kcode[port] &= ~DC_BTN_B; }
@@ -373,9 +373,9 @@ void input_sdl_handle(u32 port)
 	if (keys[4]) { kcode[port] &= ~DC_DPAD_RIGHT; }
 	if (keys[12]){ kcode[port] &= ~DC_BTN_START; }
 	if (keys[9])
-	{ 
+	{
 		dc_stop();
-	} 
+	}
 	if (keys[10])
 	{
 		rt[port] = 255;
@@ -386,6 +386,7 @@ void input_sdl_handle(u32 port)
 	}
 }
 
+#if defined(USE_SDL_GUI)
 void sdl_window_set_text(const char* text)
 {
 	#ifdef TARGET_PANDORA
@@ -483,3 +484,4 @@ void gl_term()
 {
 	SDL_GL_DeleteContext(glcontext);
 }
+#endif

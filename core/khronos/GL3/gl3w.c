@@ -1,6 +1,6 @@
 #include <GL3/gl3w.h>
 
-#if defined(USE_SDL)
+#if defined(USE_SDL_GUI)
 	#include <SDL2/SDL.h>
 	static void open_libgl(void)
 	{
