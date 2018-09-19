@@ -1122,9 +1122,12 @@ static chd_error decompress_v5_map(chd_file* chd, chd_header* header)
 {
 	int rawmapsize = map_size_v5(header);
 
+	printf("rawmapsize: %d\n", rawmapsize);
+
 	if (!compressed(header))
 	{
 		header->rawmap = (uint8_t*)malloc(rawmapsize);
+
 		core_fseek(chd->file, header->mapoffset, SEEK_SET);
 		core_fread(chd->file, header->rawmap, rawmapsize);
 		return CHDERR_NONE;
@@ -1421,11 +1424,8 @@ chd_error chd_open_file(core_file *file, int mode, chd_file *parent, chd_file **
 		}
 	}
 
-#if 0
-	/* HACK */
 	if (err != CHDERR_NONE)
 		EARLY_EXIT(err);
-#endif
 
 	/* all done */
 	*chd = newchd;
@@ -1844,6 +1844,7 @@ static UINT32 header_guess_unitbytes(chd_file *chd)
 
 static chd_error header_read(chd_file *chd, chd_header *header)
 {
+	printf("CHD: header_read()\n");
 	UINT8 rawheader[CHD_MAX_HEADER_SIZE];
 	UINT32 count;
 
@@ -1870,6 +1871,9 @@ static chd_error header_read(chd_file *chd, chd_header *header)
 	header->length        = get_bigendian_uint32(&rawheader[8]);
 	header->version       = get_bigendian_uint32(&rawheader[12]);
 
+	printf("header->length: %d\n", header->length);
+	printf("header->version: %d\n", header->version);
+
 	/* make sure it's a version we understand */
 	if (header->version == 0 || header->version > CHD_HEADER_VERSION)
 		return CHDERR_UNSUPPORTED_VERSION;
@@ -1880,7 +1884,6 @@ static chd_error header_read(chd_file *chd, chd_header *header)
 		(header->version == 3 && header->length != CHD_V3_HEADER_SIZE) ||
 		(header->version == 4 && header->length != CHD_V4_HEADER_SIZE) ||
 		(header->version == 5 && header->length != CHD_V5_HEADER_SIZE))
-
 		return CHDERR_INVALID_DATA;
 
 	/* extract the common data */
@@ -1889,6 +1892,9 @@ static chd_error header_read(chd_file *chd, chd_header *header)
 	header->compression[1]	= CHD_CODEC_NONE;
 	header->compression[2]	= CHD_CODEC_NONE;
 	header->compression[3]	= CHD_CODEC_NONE;
+
+	printf("header->flags: %d\n", header->flags);
+
 
 	/* extract the V1/V2-specific data */
 	if (header->version < 3)
@@ -1941,6 +1947,7 @@ static chd_error header_read(chd_file *chd, chd_header *header)
 	else if (header->version == 5)
 	{
 		/* TODO */
+		printf("reading v5 header\n");
 		header->compression[0]  = get_bigendian_uint32(&rawheader[16]);
 		header->compression[1]  = get_bigendian_uint32(&rawheader[20]);
 		header->compression[2]  = get_bigendian_uint32(&rawheader[24]);
@@ -1961,13 +1968,29 @@ static chd_error header_read(chd_file *chd, chd_header *header)
 
 		/* hack */
 		header->totalhunks 		= header->hunkcount;
-	}
 
+		printf("header->compression[0]: %d\n", header->compression[0]);
+		printf("header->compression[1]: %d\n", header->compression[1]);
+		printf("header->compression[2]: %d\n", header->compression[2]);
+		printf("header->compression[3]: %d\n", header->compression[3]);
+		printf("header->logicalbytes: %lu\n", header->logicalbytes);
+		printf("header->mapoffset: %lu\n", header->mapoffset);
+		printf("header->metaoffset: %lu\n", header->metaoffset);
+		printf("header->hunkbytes: %d\n", header->hunkbytes);
+		printf("header->hunkcount: %d\n", header->hunkcount);
+		printf("header->unitbytes: %d\n", header->unitbytes);
+		printf("header->unitcount: %lu\n", header->unitcount);
+		printf("header->mapentrybytes: %u\n", header->mapentrybytes);
+
+	}
 	/* Unknown version */
 	else
 	{
 		/* TODO */
+		return CHDERR_UNSUPPORTED_VERSION;
 	}
+
+	printf("CHD: header read\n");
 
 	/* guess it worked */
 	return CHDERR_NONE;
@@ -2012,6 +2035,7 @@ static chd_error hunk_read_into_cache(chd_file *chd, UINT32 hunknum)
 
 static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *dest)
 {
+// 	printf("hunk_read_into_memory(chd, %d, dest)\n", hunknum);
 	chd_error err;
 
 	/* punt if no file */
@@ -2080,19 +2104,41 @@ static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *des
 	}
 	else
 	{
+// 		printf("v5\n");
 		/* get a pointer to the map entry */
 		uint64_t blockoffs;
 		uint32_t blocklen;
 		uint16_t blockcrc;
 		uint8_t *rawmap = &chd->header.rawmap[chd->header.mapentrybytes * hunknum];
 
+		printf("Hunknum: %d, %d -> %d\n", chd->header.mapentrybytes, hunknum, *rawmap);
+
+		/*
+		 * F355: erster Hunk (5626) springt zu 15275520, sollte aber vermutlich 15265728 sein.
+		 * Differenz 9792
+		 * Bei Mapentrybytes von 4 ist das Stelle 22504 in der Rawmap.
+		 * An der Stelle steht 780 in BE, das mit den Hunkbytes (19584) multipliziert ist 15275520.
+		 * 15265728 / 19584 ist allerdings 779,5
+		 * Differenz ist Hunkbytes / 2, das funktioniert aber nur bei F355 unkomprimiert!
+		 * Crazy Taxi und F355 komprimiert funktionieren dann nicht mehr!
+		 */
 		if (!compressed(&chd->header))
 		{
+// 			printf("not compressed\n");
+ 			printf("rawmap: %lu * %d\n", (uint64_t)get_bigendian_uint32(rawmap), chd->header.hunkbytes);
 			blockoffs = (uint64_t)get_bigendian_uint32(rawmap) * (uint64_t)chd->header.hunkbytes;
+
+			// Works with F355 and Rayman 2 - however I don't know why...
+			// Doesn't work with Crazy Taxi
+			//blockoffs -= chd->header.hunkbytes / 2;
+
+ 			printf("blockoffs: %lu -> %d\n", blockoffs, chd->header.hunkbytes);
+			printf("\n");
 			if (blockoffs != 0)
 			{
 				core_fseek(chd->file, blockoffs, SEEK_SET);
 				core_fread(chd->file, dest, chd->header.hunkbytes);
+// 				printf("dest: %d\n", *dest);
 			}
 			/* TODO
 			else if (m_parent_missing)
@@ -2152,7 +2198,9 @@ static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *des
 				if (codec==NULL)
 					return CHDERR_DECOMPRESSION_ERROR;
 				chd->codecintf[rawmap[0]]->decompress(codec, chd->compressed, blocklen, dest, chd->header.hunkbytes);
-				if (dest != NULL && crc16(dest, chd->header.hunkbytes) != blockcrc)
+				if (!chd->codecintf[rawmap[0]]->lossy && dest != NULL && crc16(dest, chd->header.hunkbytes) != blockcrc)
+					return CHDERR_DECOMPRESSION_ERROR;
+				if (chd->codecintf[rawmap[0]]->lossy && crc16(chd->compressed, blocklen) != blockcrc)
 					return CHDERR_DECOMPRESSION_ERROR;
 				return CHDERR_NONE;
 
@@ -2179,7 +2227,7 @@ static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *des
 	}
 
 	/* We should not reach this code */
-	return CHDERR_DECOMPRESSION_ERROR;
+	return CHDERR_READ_ERROR;
 }
 
 /***************************************************************************
@@ -2281,6 +2329,9 @@ static chd_error metadata_find_entry(chd_file *chd, UINT32 metatag, UINT32 metai
 	metaentry->offset = chd->header.metaoffset;
 	metaentry->prev = 0;
 
+// 	printf("metaentry.offset: %lu\n", metaentry->offset);
+// 	printf("metaentry.prev: %lu\n", metaentry->prev);
+
 	/* loop until we run out of options */
 	while (metaentry->offset != 0)
 	{
@@ -2298,6 +2349,11 @@ static chd_error metadata_find_entry(chd_file *chd, UINT32 metatag, UINT32 metai
 		metaentry->flags = raw_meta_header[4];
 		metaentry->length = get_bigendian_uint24(&raw_meta_header[5]);
 		metaentry->next = get_bigendian_uint64(&raw_meta_header[8]);
+
+// 		printf("metaentry.metatag: %d\n", metaentry->metatag);
+// 		printf("metaentry.flags: %d\n", metaentry->flags);
+// 		printf("metaentry.length: %d\n", metaentry->length);
+// 		printf("metaentry.next: %lu\n", metaentry->next);
 
 		/* if we got a match, proceed */
 		if (metatag == CHDMETATAG_WILDCARD || metaentry->metatag == metatag)

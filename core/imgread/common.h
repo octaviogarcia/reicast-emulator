@@ -59,10 +59,10 @@ MODE1:
 SYNC (12) | HEAD (4) | data (2048) | edc (4) | space (8) | ecc (276)
 MODE2:
 SYNC (12) | HEAD (4) | sub-head (8) | sector_data (2328)
-  -form1 sector_data: 
+  -form1 sector_data:
    data (2048) | edc (4) | ecc (276)
 
-  -form2 sector_data: 
+  -form2 sector_data:
    data (2324) |edc(4)
 */
 
@@ -71,7 +71,7 @@ enum SectorFormat
 	SECFMT_2352,				//full sector
 	SECFMT_2048_MODE1,			//2048 user byte, form1 sector
 	SECFMT_2048_MODE2_FORM1,	//2048 user bytes, form2m1 sector
-	SECFMT_2336_MODE2,			//2336 user bytes, 
+	SECFMT_2336_MODE2,			//2336 user bytes,
 };
 
 enum SubcodeFormat
@@ -131,11 +131,12 @@ struct Track
 		CTRL = 0;
 		ADDR = 0;
 	}
+
 	bool Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
 	{
 		if (FAD>=StartFAD && (FAD<=EndFAD || EndFAD==0) && file)
 		{
-			file->Read(FAD,dst,sector_type,subcode,subcode_type);
+			file->Read(FAD, dst, sector_type, subcode, subcode_type);
 			return true;
 		}
 		else
@@ -159,7 +160,7 @@ struct Disc
 		for (size_t i=tracks.size();i-->0;)
 		{
 			*subcode_type=SUBFMT_NONE;
-			if (tracks[i].Read(FAD,dst,sector_type,subcode,subcode_type))
+			if (tracks[i].Read(FAD, dst, sector_type, subcode, subcode_type))
 				return true;
 		}
 
@@ -168,14 +169,26 @@ struct Disc
 
 	void ReadSectors(u32 FAD,u32 count,u8* dst,u32 fmt)
 	{
+		printf("GD ReadSectors: %d, %d, %d, %d\n", FAD, count, *dst, fmt);
 		u8 temp[2352];
 		SectorFormat secfmt;
 		SubcodeFormat subfmt;
 
 		while(count)
 		{
-			if (ReadSector(FAD,temp,&secfmt,q_subchannel,&subfmt))
+			if (ReadSector(FAD, temp, &secfmt, q_subchannel, &subfmt))
 			{
+				printf("GD: %d, %d\n", secfmt, subfmt);
+
+				printf("GD: temp ");
+				for (int i = 0; i < 2352; i++)
+				{
+					printf("%d, ", temp[i]);
+					if (i % 100 == 0)
+						printf("\nGD> ");
+				}
+				printf("\n");
+
 				//TODO: Proper sector conversions
 				if (secfmt==SECFMT_2352)
 				{
@@ -207,7 +220,7 @@ struct Disc
 			count--;
 		}
 	}
-	virtual ~Disc() 
+	virtual ~Disc()
 	{
 		for (size_t i=0;i<tracks.size();i++)
 			tracks[i].Destroy();
@@ -224,7 +237,7 @@ struct Disc
 
 		//session 2 : start @ track 3, and its fad
 		ses.FirstTrack=3;
-		ses.StartFAD=tracks[0].StartFAD;
+		ses.StartFAD=tracks[2].StartFAD;
 		sessions.push_back(ses);
 
 		//this isn't always true for gdroms, depends on area look @ the get-toc code
@@ -243,7 +256,7 @@ struct Disc
 			u32 fmt=tracks[i].CTRL==4?2048:2352;
 			char fsto[1024];
 			sprintf(fsto,"%s%s%d.img",path.c_str(),".track",i);
-			
+
 			FILE* fo=fopen(fsto,"wb");
 
 			for (u32 j=tracks[i].StartFAD;j<=tracks[i].EndFAD;j++)

@@ -160,6 +160,7 @@ bool InitDrive_(wchar* fn)
 	if (disc!=0)
 	{
 		printf("gdrom: Opened image \"%s\"\n",fn);
+		//die("---");
 		NullDriveDiscType=Busy;
 #ifndef NOT_REICAST
 		libCore_gdrom_disc_change();
@@ -340,7 +341,7 @@ u32 CreateTrackInfo_se(u32 ctrl,u32 addr,u32 tracknum)
 
 void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
 {
-	//printf("GD: read %08X, %d\n",StartSector,SectorCount);
+	printf("GD: read %08X, %d\n",StartSector,SectorCount);
 	if (disc)
 	{
 		disc->ReadSectors(StartSector,SectorCount,buff,secsz);

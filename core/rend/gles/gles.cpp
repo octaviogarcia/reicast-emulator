@@ -949,7 +949,7 @@ bool gl_create_resources()
 
 
 	gl.OSD_SHADER.program=gl_CompileAndLink(VertexShaderSource,OSD_Shader);
-	printf("OSD: %d\n",gl.OSD_SHADER.program);
+// 	printf("OSD: %d\n",gl.OSD_SHADER.program);
 	gl.OSD_SHADER.scale=glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	gl.OSD_SHADER.depth_scale=glGetUniformLocation(gl.OSD_SHADER.program, "depth_scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"),0);		//bind osd texture to slot 0
@@ -1923,7 +1923,7 @@ GLuint loadPNG(const string& fname, int &width, int &height)
 
 	if (!file)
 	{
-		printf("Error opening %s\n", filename);
+// 		printf("Error opening %s\n", filename);
 		return TEXTURE_LOAD_ERROR;
 	}
 

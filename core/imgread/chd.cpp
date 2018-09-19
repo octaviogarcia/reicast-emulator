@@ -1,6 +1,7 @@
 #include "common.h"
 
 #include "deps/chdr/chd.h"
+#include "deps/chdr/cdrom.h"
 
 struct CHDDisc : Disc
 {
@@ -41,22 +42,30 @@ struct CHDTrack : TrackFile
 		this->StartFAD=StartFAD;
 		this->StartHunk=StartHunk;
 		this->fmt=fmt;
+
+// 		printf("CHDTrack:\n");
+// 		printf("StartFAD: %d\n", this->StartFAD);
+// 		printf("StartHunk: %d\n", this->StartHunk);
+// 		printf("fmt: %d\n", this->fmt);
 	}
 
 	virtual void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
 	{
+
 		u32 fad_offs=FAD-StartFAD;
 		u32 hunk=(fad_offs)/disc->sph + StartHunk;
 		if (disc->old_hunk!=hunk)
 		{
-			chd_read(disc->chd,hunk,disc->hunk_mem); //CHDERR_NONE
+			chd_error err = chd_read(disc->chd,hunk,disc->hunk_mem); //CHDERR_NONE
+			if (err != CHDERR_NONE)
+				printf("ERROR during chd_read()\n");
 		}
 
 		u32 hunk_ofs=fad_offs%disc->sph;
 
-		memcpy(dst,disc->hunk_mem+hunk_ofs*(2352+96),fmt);
+		memcpy(dst, disc->hunk_mem + (hunk_ofs * CD_FRAME_SIZE), fmt);
 
-		*sector_type=fmt==2352?SECFMT_2352:SECFMT_2048_MODE1;
+		*sector_type = (fmt == 2352) ? SECFMT_2352 : SECFMT_2048_MODE1;
 
 		//While space is reserved for it, the images contain no actual subcodes
 		//memcpy(subcode,disc->hunk_mem+hunk_ofs*(2352+96)+2352,96);
@@ -79,11 +88,17 @@ bool CHDDisc::TryOpen(const wchar* file)
 	hunk_mem = new u8[hunkbytes];
 	old_hunk=0xFFFFFFF;
 
-	sph = hunkbytes/(2352+96);
+	sph = hunkbytes/(CD_FRAME_SIZE);
 
-	if (hunkbytes%(2352+96)!=0)
+	if (hunkbytes % CD_FRAME_SIZE != 0)
 	{
-		printf("chd: hunkbytes is invalid, %d\n",hunkbytes);
+		printf("chd: hunkbytes is invalid, %d\n", hunkbytes);
+		return false;
+	}
+
+	if (head->unitbytes != CD_FRAME_SIZE)
+	{
+		printf("chd: unitbytes is invalid, %d\n", head->unitbytes);
 		return false;
 	}
 
@@ -116,9 +131,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 		{
 			err = chd_get_metadata(chd, GDROM_OLD_METADATA_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
 			if (err != CHDERR_NONE)
-			{
 				err = chd_get_metadata(chd, GDROM_TRACK_METADATA_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
-			}
 
 			if (err == CHDERR_NONE)
 			{
@@ -127,7 +140,6 @@ bool CHDDisc::TryOpen(const wchar* file)
 			}
 			else
 			{
-				printf("chd: Unable to find metadata, %d\n",err);
 				break;
 			}
 		}
@@ -145,6 +157,13 @@ bool CHDDisc::TryOpen(const wchar* file)
 		t.ADDR=0;
 		t.CTRL=strcmp(type,"AUDIO")==0?0:4;
 		t.file = new CHDTrack(this,t.StartFAD,total_hunks,strcmp(type,"MODE1")?2352:2048);
+
+// 		printf("------------------\n");
+// 		printf("Type: %s\n", type);
+// 		printf("StartFAD: %d\n", t.StartFAD);
+// 		printf("EndFAD: %d\n", t.EndFAD);
+// 		printf("CTRL: %d\n", t.CTRL);
+// 		printf("------------------\n");
 
 		total_hunks+=frames/sph;
 		if (frames%sph)

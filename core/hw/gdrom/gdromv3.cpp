@@ -57,9 +57,9 @@ static struct
 		u16 data_16[6];
 		u8 data_8[12];
 		//Spi command structs
-		union 
+		union
 		{
-			struct 
+			struct
 			{
 				u8 cc;
 
@@ -74,7 +74,7 @@ static struct
 				u8 block[10];
 			};
 
-			struct 
+			struct
 			{
 				u8 b[12];
 			};
@@ -141,7 +141,7 @@ u32 data_write_mode=0;
 	GD_FeaturesT Features;
 	GD_SecCountT SecCount;
 	GD_SecNumbT SecNumber;
-	
+
 	GD_StatusT GDStatus;
 
 	static union
@@ -154,16 +154,16 @@ u32 data_write_mode=0;
 
 		u16 full;
 	} ByteCount;
-	
+
 //end
 
 void nilprintf(...){}
 
 #define printf_rm nilprintf
 #define printf_ata nilprintf
-#define printf_spi nilprintf
-#define printf_spicmd nilprintf
-#define printf_subcode nilprintf 
+#define printf_spi printf
+#define printf_spicmd printf
+#define printf_subcode nilprintf
 
 void libCore_CDDA_Sector(s16* sector)
 {
@@ -224,11 +224,13 @@ void gd_set_state(gd_states state)
 	switch(state)
 	{
 		case gds_waitcmd:
+			printf("GD: gds_waitcmd\n");
 			GDStatus.DRDY=1;   // Can accept ATA command :)
 			GDStatus.BSY=0;    // Does not access command block
 			break;
 
 		case gds_procata:
+			printf("GD: gds_procata\n");
 			//verify(prev==gds_waitcmd);    // Validate the previous command ;)
 
 			GDStatus.DRDY=0;   // Can't accept ATA command
@@ -237,6 +239,7 @@ void gd_set_state(gd_states state)
 			break;
 
 		case gds_waitpacket:
+			printf("GD: gds_waitpacket\n");
 			verify(prev==gds_procata); // Validate the previous command ;)
 
 			// Prepare for packet command
@@ -255,6 +258,7 @@ void gd_set_state(gd_states state)
 			break;
 
 		case gds_procpacket:
+			printf("GD: gds_procpacket\n");
 			verify(prev==gds_waitpacket); // Validate the previous state ;)
 
 			GDStatus.DRQ=0;     // Can't accept ATA command
@@ -263,29 +267,32 @@ void gd_set_state(gd_states state)
 			break;
 			//yep , get/set are the same !
 		case gds_pio_get_data:
+			printf("GD: gds_pio_get_data\n");
 		case gds_pio_send_data:
+			printf("GD: gds_pio_send_data\n");
 			//  When preparations are complete, the following steps are carried out at the device.
-			//(1)   Number of bytes to be read is set in "Byte Count" register. 
+			//(1)   Number of bytes to be read is set in "Byte Count" register.
 			ByteCount.full =(u16)(pio_buff.size<<1);
-			//(2)   IO bit is set and CoD bit is cleared. 
+			//(2)   IO bit is set and CoD bit is cleared.
 			IntReason.IO=1;
 			IntReason.CoD=0;
-			//(3)   DRQ bit is set, BSY bit is cleared. 
+			//(3)   DRQ bit is set, BSY bit is cleared.
 			GDStatus.DRQ=1;
 			GDStatus.BSY=0;
 			//(4)   INTRQ is set, and a host interrupt is issued.
 			asic_RaiseInterruptWait(holly_GDROM_CMD);
 			/*
-			The number of bytes normally is the byte number in the register at the time of receiving 
+			The number of bytes normally is the byte number in the register at the time of receiving
 			the command, but it may also be the total of several devices handled by the buffer at that point.
 			*/
 			break;
 
 		case gds_readsector_pio:
+			printf("GD: gds_readsector_pio\n");
 			{
 				/*
-				If more data are to be sent, the device sets the BSY bit and repeats the above sequence 
-				from step 7. 
+				If more data are to be sent, the device sets the BSY bit and repeats the above sequence
+				from step 7.
 				*/
 				GDStatus.BSY=1;
 
@@ -305,23 +312,26 @@ void gd_set_state(gd_states state)
 				gd_spi_pio_end(0,sector_count*read_params.sector_type,next_state);
 			}
 			break;
-			
+
 		case gds_readsector_dma:
+			printf("GD: gds_readsector_dma\n");
  			FillReadBuffer();
 			break;
 
 		case gds_pio_end:
-			
+			printf("GD: gds_pio_end\n");
+
 			GDStatus.DRQ=0;//all data is sent !
 
 			gd_set_state(gds_procpacketdone);
 			break;
 
 		case gds_procpacketdone:
+			printf("GD: gds_procpacketdone\n");
 			/*
-			7.  When the device is ready to send the status, it writes the 
-			final status (IO, CoD, DRDY set, BSY, DRQ cleared) to the "Status" register before making INTRQ valid. 
-			After checking INTRQ, the host reads the "Status" register to check the completion status. 
+			7.  When the device is ready to send the status, it writes the
+			final status (IO, CoD, DRDY set, BSY, DRQ cleared) to the "Status" register before making INTRQ valid.
+			After checking INTRQ, the host reads the "Status" register to check the completion status.
 			*/
 			//Set IO, CoD, DRDY
 			GDStatus.DRDY=1;
@@ -339,6 +349,7 @@ void gd_set_state(gd_states state)
 			break;
 
 		case gds_process_set_mode:
+			printf("GD: gds_process_set_mode\n");
 			memcpy(&reply_11[set_mode_offset],pio_buff.data ,pio_buff.size<<1);
 			//end pio transfer ;)
 			gd_set_state(gds_pio_end);
@@ -354,7 +365,7 @@ void gd_set_state(gd_states state)
 void gd_setdisc()
 {
 	DiscType newd = (DiscType)libGDR_GetDiscType();
-	
+
 	switch(newd)
 	{
 	case NoDisk:
@@ -452,7 +463,7 @@ void gd_process_ata_cmd()
 {
 	//Any ATA command clears these bits, unless aborted/error :p
 	Error.ABRT=0;
-	
+
 	if (sns_key==0x0 || sns_key==0xB)
 		GDStatus.CHECK=0;
 	else
@@ -463,15 +474,15 @@ void gd_process_ata_cmd()
 	case ATA_NOP:
 		printf_ata("ATA_NOP\n");
 		/*
-			Setting "abort" in the error register 
-			Setting an error in the status register 
-			Clearing "busy" in the status register 
+			Setting "abort" in the error register
+			Setting an error in the status register
+			Clearing "busy" in the status register
 			Asserting the INTRQ signal
 		*/
 
 		//this is all very hacky, I don't know if the abort is correct actually
 		//the above comment is from a wrong place in the docs ...
-		
+
 		Error.ABRT=1;
 		Error.Sense=sns_key;
 		GDStatus.BSY=0;
@@ -529,10 +540,10 @@ void gd_process_ata_cmd()
 void gd_process_spi_cmd()
 {
 
-	printf_spi("Sense: %02x %02x %02x \n", sns_asc, sns_ascq, sns_key);
+	printf_spi("SPI Sense: %02x %02x %02x \n", sns_asc, sns_ascq, sns_key);
 
 	printf_spi("SPI command %02x;",packet_cmd.data_8[0]);
-	printf_spi("Params: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x \n",
+	printf_spi("SPI Params: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x \n",
 		packet_cmd.data_8[0], packet_cmd.data_8[1], packet_cmd.data_8[2], packet_cmd.data_8[3], packet_cmd.data_8[4], packet_cmd.data_8[5],
 		packet_cmd.data_8[6], packet_cmd.data_8[7], packet_cmd.data_8[8], packet_cmd.data_8[9], packet_cmd.data_8[10], packet_cmd.data_8[11] );
 
@@ -589,13 +600,18 @@ void gd_process_spi_cmd()
 
 	case SPI_GET_TOC:
 		{
-			printf_spicmd("SPI_GET_TOC\n");
-			//printf("SPI_GET_TOC - %d\n",(packet_cmd.data_8[4]) | (packet_cmd.data_8[3]<<8) );
+			// printf_spicmd("SPI_GET_TOC\n");
+			printf_spicmd("SPI_GET_TOC - %d\n",(packet_cmd.data_8[4]) | (packet_cmd.data_8[3]<<8) );
 			u32 toc_gd[102];
-			
+
 			//toc - dd/sd
 			libGDR_GetToc(&toc_gd[0],packet_cmd.data_8[1]&0x1);
-			 
+
+// 			printf_spicmd("SPI_TOC: ");
+// 			for (int i = 0; i < 102; i++)
+// 				printf_spicmd("%d, ", toc_gd[i]);
+// 			printf_spicmd("\n");
+
 			gd_spi_pio_end((u8*)&toc_gd[0], (packet_cmd.data_8[4]) | (packet_cmd.data_8[3]<<8) );
 		}
 		break;
@@ -651,7 +667,7 @@ void gd_process_spi_cmd()
 		gd_set_state(gds_procpacketdone);
 		break;
 
-		
+
 	case SPI_REQ_STAT:
 		{
 			printf_spicmd("SPI_REQ_STAT\n");
@@ -659,7 +675,7 @@ void gd_process_spi_cmd()
 			u8 stat[10];
 
 			//0  0   0   0   0   STATUS
-			stat[0]=SecNumber.Status;   //low nibble 
+			stat[0]=SecNumber.Status;   //low nibble
 			//1 Disc Format Repeat Count
 			stat[1]=(u8)(SecNumber.DiscFormat<<4) | (cdda.repeats);
 			//2 Address Control
@@ -679,7 +695,7 @@ void gd_process_spi_cmd()
 			//9 0   0   0   0   0   0   0   0
 			stat[9]=0;
 
-			
+
 			verify((packet_cmd.data_8[2]+packet_cmd.data_8[4])<11);
 			gd_spi_pio_end(&stat[packet_cmd.data_8[2]],packet_cmd.data_8[4]);
 		}
@@ -688,7 +704,7 @@ void gd_process_spi_cmd()
 	case SPI_REQ_ERROR:
 		printf_spicmd("SPI_REQ_ERROR\n");
 		//printf("GDROM: Unhandled Sega SPI frame: SPI_REQ_ERROR\n");
-		
+
 		u8 resp[10];
 		resp[0]=0xF0;
 		resp[1]=0;
@@ -717,8 +733,8 @@ void gd_process_spi_cmd()
 	case SPI_CD_OPEN:
 		printf_spicmd("SPI_CD_OPEN\n");
 		printf("GDROM: Unhandled Sega SPI frame: SPI_CD_OPEN\n");
-		
-		
+
+
 		gd_set_state(gds_procpacketdone);
 		break;
 
@@ -814,7 +830,7 @@ void gd_process_spi_cmd()
 	case SPI_CD_SCAN:
 		printf_spicmd("SPI_CD_SCAN\n");
 		printf("GDROM: Unhandled Sega SPI frame: SPI_CD_SCAN\n");
-		
+
 
 		gd_set_state(gds_procpacketdone);
 		break;
@@ -855,7 +871,7 @@ void gd_process_spi_cmd()
 				else
 					subc_info[1]=0x15;//15h	No audio status information
 			}
-			
+
 			subc_info[1]=0x15;
 
 			if (format==0)
@@ -909,7 +925,7 @@ void gd_process_spi_cmd()
 }
 //Read handler
 u32 ReadMem_gdrom(u32 Addr, u32 sz)
-{	
+{
 	switch (Addr)
 	{
 		//cancel interrupt
@@ -993,12 +1009,12 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		ByteCount.low =(u8) data;
 		break;
 
-	case GD_BYCTLHI: 
+	case GD_BYCTLHI:
 		printf_rm("GDROM: Write to GD_BYCTLHI = %X, Size:%X\n",data,sz);
 		ByteCount.hi =(u8) data;
 		break;
 
-	case GD_DATA: 
+	case GD_DATA:
 		{
 			if(2!=sz)
 				printf("GDROM: Bad size on DATA REG\n");
@@ -1030,16 +1046,16 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		printf("GDROM: Write GD_DEVCTRL (Not implemented on Dreamcast)\n");
 		break;
 
-	case GD_DRVSEL: 
+	case GD_DRVSEL:
 		if (data != 0) {
 			printf("GDROM: Write to GD_DRVSEL, !=0. Value is: %02X\n", data);
 		}
-		DriveSel = data; 
+		DriveSel = data;
 		break;
 
 		// By writing "3" as Feature Number and issuing the Set Feature command,
 		// the PIO or DMA transfer mode set in the Sector Count register can be selected.
-		// The actual transfer mode is specified by the Sector Counter Register. 
+		// The actual transfer mode is specified by the Sector Counter Register.
 
 	case GD_FEATURES_Write:
 		printf_rm("GDROM: Write to GD_FEATURES\n");
@@ -1087,8 +1103,8 @@ int GDRomschd(int i, int c, int j)
 
 	u32 src = SB_GDSTARD,
 		len = SB_GDLEN-SB_GDLEND ;
-	
-	if(SB_GDLEN & 0x1F) 
+
+	if(SB_GDLEN & 0x1F)
 	{
 		die("\n!\tGDROM: SB_GDLEN has invalid size !\n");
 		return GDROM_TICK;
@@ -1115,7 +1131,7 @@ int GDRomschd(int i, int c, int j)
 	}
 
 	u32 len_backup = len;
-	if(1 == SB_GDDIR) 
+	if(1 == SB_GDDIR)
 	{
 		while(len)
 		{
@@ -1196,7 +1212,7 @@ void GDROM_DmaEnable(u32 addr, u32 data)
 	SB_GDEN = (data & 1);
 	if (SB_GDEN == 0 && SB_GDST == 1)
 	{
-		printf_spi("GD-DMA aborted\n");
+		printf_spi("SPI GD-DMA aborted\n");
 		SB_GDST = 0;
 	}
 }
@@ -1220,7 +1236,7 @@ void gdrom_reg_Init()
 }
 void gdrom_reg_Term()
 {
-	
+
 }
 
 void gdrom_reg_Reset(bool Manual)
