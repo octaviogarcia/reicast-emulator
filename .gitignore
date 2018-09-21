@@ -32,13 +32,9 @@ reicast.xccheckout
 reicast-ios.xccheckout
 
 # Linux General
-shell/linux/.map
-shell/linux/nosym-reicast.elf
-shell/linux/reicast.elf
 .map
 nosym-reicast.elf
 reicast.elf
-Makefile
 
 
 # Visual Studio
