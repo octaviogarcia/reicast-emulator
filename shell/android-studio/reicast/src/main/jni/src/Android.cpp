@@ -28,6 +28,9 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_run(JNIEnv *env,jobje
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_loadstate(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_savestate(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobject obj,jint id, jint v)  __attribute__((visibility("default")));
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env,jobject obj,jint id, jbyteArray d)  __attribute__((visibility("default")));
 
@@ -164,12 +167,13 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_dreamtime(JNIEnv *env
 }
 
 void egl_stealcntx();
-void SetApplicationPath(wchar *path);
 void reios_init(int argc,wchar* argv[]);
 int dc_init();
 void dc_run();
 void dc_pause();
 void dc_term();
+void dc_loadstate();
+void dc_savestate();
 void mcfg_Create(MapleDeviceType type,u32 bus,u32 port);
 
 bool VramLockedWrite(u8* address);
@@ -430,6 +434,16 @@ int msgboxf(const wchar* text,unsigned int type,...) {
     jenv->SetByteArrayRegion(bytes, 0, byteCount, (jbyte *) temp);
 
     return jenv->CallIntMethod(emu, coreMessageMid, bytes);
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_savestate(JNIEnv *env,jobject obj)
+{
+    dc_savestate();
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_loadstate(JNIEnv *env,jobject obj)
+{
+    dc_loadstate();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)

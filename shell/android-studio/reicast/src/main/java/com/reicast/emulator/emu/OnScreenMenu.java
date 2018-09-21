@@ -461,6 +461,24 @@ public class OnScreenMenu {
 			params = setVmuParams();
 			vmuIcon.addView(vmuLcd, params);
 
+			OnClickListener saveState = new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.savestate();
+					dismiss();
+				}
+			};
+			Button buttonSave = (Button) hlay.findViewById(R.id.buttonSave);
+			addimg(buttonSave, R.drawable.save_state, saveState);
+
+			OnClickListener loadState = new OnClickListener() {
+				public void onClick(View v) {
+					JNIdc.loadstate();
+					dismiss();
+				}
+			};
+			Button buttonLoad = (Button) hlay.findViewById(R.id.buttonLoad);
+			addimg(buttonLoad, R.drawable.load_state, loadState);
+
 			OnClickListener clickDisk = new OnClickListener() {
 				public void onClick(View v) {
 					if (Emulator.bootdisk != null)

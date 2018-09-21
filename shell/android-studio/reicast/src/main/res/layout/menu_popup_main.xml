@@ -35,6 +35,40 @@
             android:gravity="center" >
 
             <Button
+                android:id="@+id/buttonSave"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/rounded"
+                android:ems="8"
+                android:text="@string/popup_button_save" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="72dp"
+            android:layout_margin="1dp"
+            android:layout_weight="1"
+            android:gravity="center" >
+
+            <Button
+                android:id="@+id/buttonLoad"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/rounded"
+                android:ems="8"
+                android:text="@string/popup_button_load" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="72dp"
+            android:layout_margin="1dp"
+            android:layout_weight="1"
+            android:gravity="center" >
+
+            <Button
                 android:id="@+id/buttonDisk"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

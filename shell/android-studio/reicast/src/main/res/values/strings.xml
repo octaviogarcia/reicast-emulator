@@ -164,6 +164,8 @@
     
     <!-- Onscreen Menu -->
     <string name="popup_button_back">Back</string>
+    <string name="popup_button_save">Save State</string>
+    <string name="popup_button_load">Load State</string>
     <string name="popup_button_disk">Disk Swap</string>
     <string name="popup_button_vmu_swap">VMU Swap</string>
     <string name="popup_button_options">Config Menu</string>

@@ -12,6 +12,9 @@ public final class JNIdc
 	public static native void pause();
 	public static native void destroy();
 
+	public static native void savestate();
+	public static native void loadstate();
+
 	public static native int send(int cmd, int opt);
 	public static native int data(int cmd, byte[] data);
 
