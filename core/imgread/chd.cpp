@@ -73,6 +73,9 @@ struct CHDTrack : TrackFile
 	}
 };
 
+/* tracks are padded to a multiple of this many frames */
+const uint32_t CD_TRACK_PADDING = 4;
+
 bool CHDDisc::TryOpen(const wchar* file)
 {
 	chd_error err=chd_open(file,CHD_OPEN_READ,0,&chd);
@@ -80,7 +83,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 	if (err!=CHDERR_NONE)
 		return false;
 
-	printf("chd: parsing file %s\n",file);
+	printf("CHD: parsing file %s\n",file);
 
 	const chd_header* head = chd_get_header(chd);
 
@@ -110,6 +113,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 
 	u32 total_secs=0;
 	u32 total_hunks=0;
+	int extraframes = 0;
 
 	for(;;)
 	{
@@ -151,19 +155,24 @@ bool CHDDisc::TryOpen(const wchar* file)
 		}
 		printf("%s\n",temp);
 		Track t;
-		t.StartFAD=total_frames;
+		t.StartFAD=total_frames+extraframes;
+
+		int padded = (frames + CD_TRACK_PADDING - 1) / CD_TRACK_PADDING;
+		extraframes += (padded * CD_TRACK_PADDING) - frames;
+		printf("CHD: extraframes: %d\n", extraframes);
+
 		total_frames+=frames;
-		t.EndFAD=total_frames-1;
+		t.EndFAD=total_frames+extraframes-1;
 		t.ADDR=0;
 		t.CTRL=strcmp(type,"AUDIO")==0?0:4;
 		t.file = new CHDTrack(this,t.StartFAD,total_hunks,strcmp(type,"MODE1")?2352:2048);
 
-// 		printf("------------------\n");
-// 		printf("Type: %s\n", type);
-// 		printf("StartFAD: %d\n", t.StartFAD);
-// 		printf("EndFAD: %d\n", t.EndFAD);
-// 		printf("CTRL: %d\n", t.CTRL);
-// 		printf("------------------\n");
+		printf("------------------\n");
+		printf("CHD: Type: %s\n", type);
+		printf("CHD: StartFAD: %d\n", t.StartFAD);
+		printf("CHD: EndFAD: %d\n", t.EndFAD);
+		printf("CHD: CTRL: %d\n", t.CTRL);
+		printf("------------------\n");
 
 		total_hunks+=frames/sph;
 		if (frames%sph)
