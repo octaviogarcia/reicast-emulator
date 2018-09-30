@@ -100,8 +100,7 @@ extern VArray2 aica_ram;
 extern u32 VREG;//video reg =P
 extern u32 ARMRST;//arm reset reg
 extern u32 rtc_EN;
-extern s32 aica_pending_dma ;
-
+extern int dma_sched_id;
 
 
 //./core/hw/aica/aica_mem.o
@@ -374,7 +373,6 @@ extern u32 _pal_rev_16[64];
 extern u32 pal_rev_256[4];
 extern u32 pal_rev_16[64];
 //extern u32 palette_ram[1024];
-extern u32 decoded_colors[3][65536];
 extern u32 tileclip_val;
 extern u8 f32_su8_tbl[65536];
 //written but never read
@@ -895,7 +893,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(VREG);
 	REICAST_S(ARMRST);
 	REICAST_S(rtc_EN);
-	REICAST_S(aica_pending_dma) ;
+	REICAST_S(dma_sched_id);
 
 	REICAST_SA(aica_reg,0x8000);
 
@@ -1030,11 +1028,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_SA(_pal_rev_16,64);
 	REICAST_SA(pal_rev_256,4);
 	REICAST_SA(pal_rev_16,64);
-	for ( i = 0 ; i < 3 ; i++ )
-	{
-		u32 *ptr = decoded_colors[i] ;
-		REICAST_SA(ptr,65536);
-	}
 	REICAST_S(tileclip_val);
 	REICAST_SA(f32_su8_tbl,65536);
 	REICAST_SA(FaceBaseColor,4);
@@ -1302,7 +1295,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(VREG);
 	REICAST_US(ARMRST);
 	REICAST_US(rtc_EN);
-	REICAST_US(aica_pending_dma) ;
+	REICAST_US(dma_sched_id);
 
 	REICAST_USA(aica_reg,0x8000);
 
@@ -1437,11 +1430,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_USA(_pal_rev_16,64);
 	REICAST_USA(pal_rev_256,4);
 	REICAST_USA(pal_rev_16,64);
-	for ( i = 0 ; i < 3 ; i++ )
-	{
-		u32 *ptr = decoded_colors[i] ;
-		REICAST_USA(ptr,65536);
-	}
 	REICAST_US(tileclip_val);
 	REICAST_USA(f32_su8_tbl,65536);
 	REICAST_USA(FaceBaseColor,4);
